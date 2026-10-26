@@ -1,0 +1,13 @@
+{
+  "formatVersion": 1,
+  "id": "3f9b2c1e-7a54-4d0e-8c61-5b2a9e4d7f13",
+  "name": "插件入门示例",
+  "width": 1280,
+  "height": 720,
+  "fps": { "num": 30, "den": 1 },
+  "activeSequence": "main",
+  "scenes": ["scenes/intro.json"],
+  "sequences": ["sequences/main.json"],
+  "assets": [],
+  "plugins": [{ "source": "components/plugins/hello/plugin.json", "enabled": true }]
+}

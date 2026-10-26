@@ -1,0 +1,36 @@
+{
+  "kind": "vmotion-plugin",
+  "apiVersion": 1,
+  "id": "example.hello",
+  "name": "Hello 插件",
+  "version": "1.0.0",
+  "description": "最小插件示例：一个 JSX 组件贡献，一个生成候选的 plan 工具，一个只读 query 工具。",
+  "entry": "components/plugins/hello/tools.ts",
+  "contributions": [
+    { "id": "badge", "name": "标题徽章", "kind": "component", "source": "components/plugins/hello/badge.tsx" }
+  ],
+  "tools": [
+    {
+      "id": "place_badge",
+      "description": "在指定场景放置一个可编辑的标题徽章组件，返回准确候选（不直接改工程）。调用时在 _context.sceneIds 中选定该场景。",
+      "mode": "plan",
+      "categories": ["composition"],
+      "keywords": "徽章 标题 示例",
+      "reads": { "scenes": true },
+      "parameters": {
+        "sceneId": { "type": "string", "default": "intro" },
+        "label": { "type": "string", "default": "Hello, Vmotion" },
+        "accent": { "type": "color", "default": "#7cf3ff" }
+      }
+    },
+    {
+      "id": "count_layers",
+      "description": "只读：统计调用方在 _context.sceneIds 中选定的场景的图层数量。",
+      "mode": "query",
+      "categories": ["composition"],
+      "keywords": "统计 图层 场景",
+      "reads": { "scenes": true },
+      "parameters": {}
+    }
+  ]
+}

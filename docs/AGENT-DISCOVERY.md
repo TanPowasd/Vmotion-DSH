@@ -1,0 +1,107 @@
+# Agent 按需工具发现
+
+默认 `vmotion mcp --project ...` 使用 compact 模式，只暴露 10 个常用入口：agent_guide、project_context、project_file_read、project_preflight、project_apply、frame_capture，以及 tools_search、tool_schema、tool_call、tools_load。148 项内置创作能力全部仍可使用；启用的项目插件增加 namespaced 能力，不增加默认入口。完整模式 `--tools all` 返回 152 个内置直接工具/发现入口及启用的插件工具，兼容原有直接调用与结果形状。
+
+## 统一 Agent 契约
+
+外部 AI（如 Claude Code）通过 MCP 驱动时最常见的五类困惑已统一处理：
+
+- **只有 tools/list 中的工具能按名字直接调用。** compact 模式下其余能力（如 still_inspect）在客户端里不是函数；请用 `tool_call {"name":"still_inspect","arguments":{}}`，或先 `tools_load` 再刷新 tools/list。若客户端仍按名字发送未加载的能力，服务端返回 `TOOL_NOT_LOADED`（附 tool_call/tools_load 用法与当前 directTools），而不是 SDK 的 “Tool X disabled”。`project_context` 与 `agent_guide` 的结果附带 `mcp` 块：`directTools`（当前连接已加载的直接工具）与 `hidden` 说明。`tool_schema` 现在也能查询入口工具自身（tools_search、tool_schema、tool_call、tools_load，返回 `entry:true`）；未知名称返回 `TOOL_NOT_FOUND`，消息列出入口工具与 `tools_search {"query":...}` 用法，details.suggestions 给出相近名称。`mcp --tools auto` 为可选模式：与 compact 相同启动，经 tool_call/tool_schema 使用过的能力自动成为直接工具（最多 32 个，发送 tools/list_changed）。
+- **effect 声明。** 每项能力声明 `effect`：`read`（只读）、`plan`（返回存储候选，从不提交）、`write`（直接提交或产生文件/任务）。tools_search 条目、tool_schema 与 plan/write 结果都带 `effect`；read 结果不额外加字段。
+- **统一计划返回。** 所有 planner（27 个 effect=plan 能力：*_plan、mesh_generate/mesh_import、scene3d_materials、plugins_install）以及以 `mode:"plan"` 调用的直接写工具都返回：
+
+```json
+{"committed":false,"effect":"plan",
+ "plan":{"planId":"<sha256>","candidateRevision":"<rev>","baseRevision":"<rev>",
+         "summary":{"operations":3,"detail":"…"},"samples":[{"sceneId":"intro","frame":0}]},
+ "next":"project_preflight({planId}) then project_apply({planId}); …"}
+```
+
+  候选始终经 storeAgentPlan 存储（即使 `delivery:"inline"` 或 sequence_plan 这类原先只返回内联操作的工具），下一步一律 `project_preflight({planId})` → `project_apply({planId})`。`detail:true`（或 `response:"full"`）才内联 `plan.operations/files`。旧字段 `candidate`/`apply`（内联操作或 planId）本版本继续保留，并在 `deprecated:["candidate","apply"]` 中标注，下一版本移除。cache_plan 的 planId 由 `cache_apply` 消费（`next:"cache_apply({planId})"`）。
+- **直接写工具的 mode。** animation_edit、time_edit、component_parameters_edit、composition_edit_layer、composition_structure(_batch)、scene_place、scene_precompose、scene_reset_instance、asset_place、sequence_edit、captions_import、vector_bake、repeat_create、effect_import_lut、project_transact 新增 `mode:"apply"|"plan"`（默认 apply，行为不变）。plan 模式在服务内捕获该调用的唯一事务，不写工程/历史，返回上面的统一计划；composition_edit_layers 保留原生 mode。tool_schema 对这些工具给出 `modes:["apply","plan"]`。所有写结果包含 `committed`（是否产生一次工程提交；project_apply 等于 applied）与 `next`。
+- **参数错误可直接修正。** `TOOL_ARGUMENTS` 的 details 每项给出 `path`、完整 `allowed` 列表（枚举/判别字段，不截断）、`minimum`/`maximum`、`allowedKeys`（未知字段）与该字段 `example`；顶层 `example` 是最短可通过的调用（必填字段）。直接入口工具（含 tools_search）由 Vmotion 自己校验，不再返回 SDK 的 `-32602` 文本。
+
+`project_schema` 对对象 schema 先返回 `properties` 索引（字段名 → 简短类型/默认值，`animations` 说明 keys[].{frame,value,easing,bezier} 格式），再返回完整 schema，便于截断大结果的客户端仍能看到所有字段；`properties:["animations","start"]` 只返回所选字段。新增名称 `animation` 与 `keyframe`（与 animation_edit upsert 的 keys 相同）。`animation_inspect` 的 nodeId 变为可选：只给 sceneId（可加 path/properties/offset/limit）返回场景范围的分页总览，每个动画图层给出通道、键数与帧范围，默认 30 项、最多 200。
+
+预检证据：`project_preflight`/`project_apply` 上显式 `samples:false`，或 `visual:false` 且本次请求未给 samples，会覆盖存储计划里的 samples/visual，不渲染 320px 接触表；`.vmotion/preflight/` 默认输出只保留最新 48 张（≤64MB），其余在下一次写入时清理。
+
+本轮上下文优化：默认 tools/list 用简短描述，`tools_search` 返回最多160字摘要（截断有标志），省略重复参数名/分类统计和完整插件元数据；`detail:true` 恢复这些字段。查询索引按不可变目录复用，插件变化生成新目录。`tool_schema` 默认给接口/分类/注解，`detail:true` 补说明/调用示例/插件信息；项目插件的身份/版本/hash仍保留，便于拒绝旧接口。detail不改变输入接口hash，`format:expanded` 仍只控制引用展开。
+
+`tool_call` 新增 `fields:["summary.mean","samples.0.pixelHash"]`（最多32条、每条160字符）和 `media:false`。结果选择使用自身字段，禁止原型路径；非法选择在执行前拒绝，不会先写工程。返回 `resultProjection` 含 partial、实际请求路径和missing；缺失结果字段不把已经完成的写操作误报成失败。revision/baseRevision/candidateRevision/applied/valid若存在会保留。数组索引投影以索引对象返回，不重新编号。选字段只缩短传输，不减少底层渲染/检查工作；media=false关闭内联媒体，文件输出和诊断仍执行。完整结果用response=full并省略fields；原生媒体只传一次。
+
+CLI对应 `tools-search --detail`、`tool-schema --detail`、`tool-call --fields a,b --no-media`。CLI tool-call 走同一契约（planner 返回 plan.planId，写返回 committed/next；request 文件可含 `mode:"plan"`/`detail:true`），`tool-call --name tools_search|tool_schema` 与 `tool-schema --name tool_call` 也可用；`mcp --tools auto` 见上文。窗口打开时仍通过同一工程服务。`composition_edit_layers mode=plan` 返回固定候选，直接apply默认保持；没有新增独立编辑系统或额外默认工具。
+
+`plugins_inspect/plan` 管理项目本地插件和资源贡献；`plugins_package` 只返回分页内容指纹和文件大小。`tools_search pluginId` 查询一个插件的能力，Schema/call/load/list 按清单与源码内容条件hash刷新，支持升级/禁用/撤销和外部文件更新。插件参数接口与导出一致、上下文显式、编辑仍准确候选/一次撤销。CLI工具查询可选 --project，详见 PLUGINS.md。
+
+十八个内置模块148项能力使用统一注册表，唯一名称/处理器/版本/依赖在启动时校验；工程控制、历史恢复、缓存、画面检查及所有创作模块均通过同一注册表分发。assets_query默认24素材摘要、drawing_query默认24图层/16笔迹且点数组按需分页，component_query默认短参数/32通道，audio_timeline默认24片段、render_query默认20任务，project_diagnostics默认20条诊断/冲突定位/待修复文件。color_scopes默认省略分布数组，frame_compare/layer_impact返回短像素指标，原生图片不重复Base64。完整源码/metadata/错误/压感点显式读取，旧完整接口保持兼容。
+
+静态图片能力归入发现分类 `image`：`still_inspect`、`still_plan`（同时属 composition）与 `image_export`（同时属 render）。默认入口不变；`tools_search {"query":"海报","category":"image"}` 或 `tools_load {"categories":["image"]}` 按需取得，`agent_guide topic=image` 返回对应工作流。still_inspect 默认只给预设/模板 ID，presets/templates=true 才返回完整表；image_export 只返回路径/尺寸/字节/pixelHash，不含 Base64，preview 缩略图为显式选项。详见 [静态图片](STILL-IMAGES.md)。
+
+偏旁部件拼字能力归入发现分类 `glyphs`（同时属 vector）：`glyphs_inspect` 与 `glyphs_plan`。`tools_search {"query":"偏旁 部件 拼字","category":"glyphs"}` 按需取得，`agent_guide topic=glyphs` 返回工作流。预览图只作为原生 media block 传送，JSON 不含 Base64；覆盖率与列表默认分页。实测 glyphs_plan 接口 8084 字节，inspect 默认结果 640 字节，预览结果 1439 字节，计划结果 1035 字节。详见 [偏旁部件拼字](GLYPHS.md)。
+
+`project_schema` 的名称来自权威资源注册表，包含声音、混音、插件、分镜与纹理等格式。默认入口数量保持不变；按需读取一个资源或operationType，避免加载全部Schema。
+
+`effect_graph_query`默认24项节点/参数/连接/未用ID/资源/输出，选定根或子图端口后报告实际可达节点。默认参数只显示有界预览，detail读取选定完整值/该参数Schema；旧effect_graph_inspect仍保留完整结果。通过effect_graph_plan的output/outputs及target.output选择共享资源的不同视觉结果，再用render_profile graphCache=true/false核验缓存收益与像素一致性。
+
+`render_compare`在同一工程或planId候选上运行两组配置，默认保留图与作者代码，通过像素hash与重复帧检查区分等价性和确定性，再报告实际耗时/图面/readback/scalar/scratch。节点统计最多256项、默认8个热点定位，超出容量的执行明确报告；节点计时不是独占时间。默认不传逐轮完整性能对象，detail才取匹配帧hash/时间。生成或重映射对象用composition_interactions取得path/frame/contextFrames后定位；index是作者effects数组索引，旧brightness/shadow等隐式前置效果不占该索引。比较不自动改写工程，素材元数据变化或错误配置返回诊断。
+
+animation_layers_inspect默认8层/16通道，层/通道/键页独立，只有includeKeys才取选定键数组；samples为普通键与有序动画层的结果，在驱动前。animation_layers_plan按稳定ID跨scope批量编辑、准确候选与一次undo；motion_plan output=layers从参数化模板生成可重叠动作。普通动画设置extrapolate控制before/after循环或延续。nativeCache基线显示Rust索引编译/命中、真实IPC/定义字节和回退状态；动画资源不通过MCP自动全部注入。详见ANIMATION-LAYERS.md。
+
+vmotion.organization的project_references/reference_sample/reference_plan/sequence_query默认24项分页，查询实际声明、静态literal hint或指定帧的生成用途，不默认读源码/展开所有镜头。全文/JSON pointer/retimed编辑locator/完整clip按detail取得。默认引用索引缓存检查实际文件文本，reference_plan不自动改写代码/pin或删素材；详情见PROJECT-REFERENCES.md。
+
+`tool_schema` 默认使用标准本地 `$ref` 复用重复字段，提供准确约束；`format:"expanded"` 可返回原先的内联表示。保留响应 `schemaHash`，以后传 `ifHash`：接口未变化时只返回 name/hash/notModified。Hash 标识 Schema 与工具说明，不是工程版本；工程写操作仍使用 revision 与原候选。CLI 对应 `tool-schema --name NAME --if-hash HASH` 和 `--expanded`。
+
+此前封装 MCP 实测：sound_plan 接口 JSON 从 38169 字节减到 14821（61.2%），加入程序场后的 effect_graph_plan 从 94825 减到 29295（69.1%），缓存命中仅 120–127 字节。默认 10 入口目录为 14066 字节；同一修改 compact 响应 432 字节，而完整工程读取 45764 字节。图片/音频只通过原生 media block 传送，JSON/文本不重复 Base64。字节是稳定回归指标，实际 token 按外部模型分词计算。
+
+优先通过 tool_call 调用隐藏能力，按任务查一个接口；不需要加载全部目录或反复请求完整源码。大型计划用短 planId，查询对象/音符时指定 IDs 和分页，完整数据仅在确需编辑时请求。
+
+初始 tools/list 不必携带所有剪辑、绘画、矩阵、声音和结构操作的 Schema。加入平面特效接口后的实际测量 compact 目录约 13.6KB，完整目录约 217.2KB；这是协议 JSON 字节数，不是模型 token 计数，随接口版本变化。
+
+建议从 project_context 定位工程，agent_guide 确定工作流，再按以下方式操作：
+
+```json
+{"name":"tools_search","arguments":{"query":"深度","category":"3d","limit":5}}
+{"name":"tool_schema","arguments":{"name":"scene3d_render"}}
+{"name":"tool_call","arguments":{
+  "name":"scene3d_render",
+  "arguments":{"source":{"sceneId":"intro","nodeId":"world","frame":90},"width":640}
+}}
+```
+
+tools_search 返回名称、摘要、类别、参数字段和读写提示，不返回完整输入 Schema。搜索支持英文名称/描述和中文词，offset/limit 分页；明确工具名称匹配优先，专用词优先于大类标签。可用类别为 core、animation、effects、composition、vector、drawing、media、editing、audio、3d、math、render、recovery、image、glyphs，类别允许交叉。
+
+tool_schema 返回选定能力的完整 inputSchema、语义与调用方式。tool_call 验证同一输入 Schema，调用相同工程服务与历史记录；可调用未出现在 tools/list 的能力。返回 structuredContent 与兼容文本，画面/声音作为原生 MCP media blocks 返回，不把 base64 混进结构化诊断。
+
+需要连续使用某类直接工具时加载：
+
+```json
+{"name":"tools_load","arguments":{"categories":["animation","composition"],"mode":"add"}}
+{"name":"tools_load","arguments":{"names":["matrix3d","scene3d_render"],"mode":"replace"}}
+{"name":"tools_load","arguments":{"mode":"replace"}}
+```
+
+add 保留已有可选工具；replace 先恢复六个基本创作工具再加载指定项。四个发现入口始终可用。每次实际变化只发送一次 tools/list_changed；重复加载相同集合不发送额外通知。工具加载只影响本次 MCP 连接，另一 agent 与桌面会话不受影响，工程和撤销记录不改变。未知名称使整次加载失败，不部分加载。不能刷新工具列表的客户端直接使用 tool_call，无需动态加载。
+
+compact 模式下的写操作默认只返回 revision、选区、诊断、冲突与撤销状态，保留创建对象/素材/片段等专用结果。画稿修改返回图层 ID 和笔迹数量，完整笔迹用 drawing_get 获取。素材导入明确返回 importedAsset；PSD/OpenRaster 返回 importedArtwork 的素材 ID。project_inspect 是显式全量读取，仍可通过 tool_call 调用。需要原结果时使用 `tool_call` 的 response=full；`--tools all` 的直接工具保留原有结果形状。
+
+错误提供 code、原诊断/参数路径和对应恢复建议。REVISION_CONFLICT 重新读 context；FILE_HASH_CONFLICT 重新读文件；ASSET_CHANGED 重新取证素材；参数错误先读 tool_schema。工具路由不会绕过 revision、文件 hash、素材证据、轨道锁、冲突和原子事务。
+
+存储候选支持 `{planId}`，自动读取内容校验的缓存操作；mesh_generate/mesh_import 默认使用该方式，参见 MESHES.md。FILE_WRITE 提供文件、系统错误和尝试数；Windows 短暂占用在有界退避后重试，持久失败应解决实际存储问题并重新读取 context。
+
+桌面已打开时，新工程服务在命名管道返回前就压缩 agent 结果，避免把整个源码快照来回传输。连接探测使用精简 ping；旧服务缺少新接口时保留已有桥接兼容。CLI 也使用同一工具定义与调用规则：
+
+```powershell
+vmotion tools-search --query 深度 --category 3d
+vmotion tool-schema --name scene3d_render
+vmotion tool-call --project my-project --name sequence_edit --request edit.json
+vmotion tool-call --project my-project --name project_inspect --full
+vmotion mcp --project my-project --tools all
+```
+
+CLI 的 request 文件为具体能力的参数对象，不含外层 name/arguments。默认媒体返回文件路径，--inline 额外输出 media 数据。readonly/destructive/idempotent 提示用于 agent 识别能力性质，不是权限或批准机制；调用能力仍取决于工具参数与工程实际状态。软件本身不接入模型。
+
+文字/矢量批次：graphics_inspect 分页共享几何，graphics_plan 默认短存储候选；pathText/textAnimator/shapeOperator 可单独查询 Schema。详见 TYPOGRAPHY-SHAPES.md。
+
+电影/运动批次：tracking_analyze 是独立 worker 背景任务；tracking_inspect 返回分页质量与失跟区间，tracking_evidence 给出原始像素标注，tracking_plan 保存轨迹并一次候选烘焙贴附/稳定/四点贴图。默认短任务/候选；详见 TRACKING.md。
+
+设计资源：theme_inspect/plan 提供实时 typed Token/别名/继承/局部覆盖；template_inspect/plan 发布固定源码版本、端口实例、选择升级与私有可编辑副本。tool_schema paths 可仅查询需要的属性分支，回复明确partial，执行仍完整验证；详见 THEMES-TEMPLATES.md。

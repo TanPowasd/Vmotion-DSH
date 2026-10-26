@@ -1,0 +1,17 @@
+{
+  "id": "intro",
+  "name": "Intro",
+  "duration": 90,
+  "background": "#07090f",
+  "nodes": [
+    {
+      "id": "hello-badge",
+      "type": "component",
+      "name": "Hello badge",
+      "component": "components/plugins/hello/badge.tsx",
+      "width": 1280,
+      "height": 720,
+      "params": { "label": "你好，插件" }
+    }
+  ]
+}

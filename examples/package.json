@@ -1,0 +1,13 @@
+{
+  "name": "vmotion-examples-typecheck",
+  "private": true,
+  "description": "Type-checks the example components and plugin against sdk/types only. Vmotion itself does not need this file to render the examples.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@vmotion/sdk": "file:../sdk/types",
+    "typescript": "^5.9.3",
+    "zod": "^3.25.76"
+  }
+}
