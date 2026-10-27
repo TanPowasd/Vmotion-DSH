@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "pid": 1280,
+  "pid": 2582,
   "skill": {
     "name": "vmotion",
     "path": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh/assets/skills/vmotion/SKILL.md",
@@ -78,8 +78,8 @@
         "/tmp/vprobe",
         "--json"
       ],
-      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work",
-      "durationMs": 58176,
+      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh",
+      "durationMs": 6922,
       "result": {
         "valid": true,
         "revision": "90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7",
@@ -87,7 +87,7 @@
       }
     },
     "error": null,
-    "text": "vmotion validate: exit 0 (ok) in 58176 ms\n{\n  \"valid\": true,\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"diagnostics\": []\n}"
+    "text": "vmotion validate: exit 0 (ok) in 6922 ms\n{\n  \"valid\": true,\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"diagnostics\": []\n}"
   },
   "frame": {
     "isError": false,
@@ -104,8 +104,8 @@
         "/tmp/vprobe/exports/dsh/frame-45.png",
         "--json"
       ],
-      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work",
-      "durationMs": 5827,
+      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh",
+      "durationMs": 6576,
       "result": {
         "output": "/tmp/vprobe/exports/dsh/frame-45.png",
         "revision": "90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7",
@@ -114,6 +114,6 @@
       }
     },
     "error": null,
-    "text": "vmotion frame: exit 0 (ok) in 5827 ms\n{\n  \"output\": \"/tmp/vprobe/exports/dsh/frame-45.png\",\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"frame\": 45,\n  \"mimeType\": \"image/png\"\n}"
+    "text": "vmotion frame: exit 0 (ok) in 6576 ms\n{\n  \"output\": \"/tmp/vprobe/exports/dsh/frame-45.png\",\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"frame\": 45,\n  \"mimeType\": \"image/png\"\n}"
   }
 }

@@ -1,0 +1,23 @@
+{
+  "profile": "vmtest",
+  "complete": true,
+  "diagnostics": [],
+  "entries": [
+    {
+      "path": "/96",
+      "id": "vmotion-skill",
+      "name": "vmotion-dsh/skill",
+      "status": "schema",
+      "configRef": "#/$defs/config66"
+    },
+    {
+      "path": "/97",
+      "id": "vmotion-tools",
+      "name": "vmotion-dsh/tools",
+      "status": "schema",
+      "configRef": "#/$defs/config67"
+    }
+  ],
+  "nonSchemaEntries": 0,
+  "totalEntries": 98
+}

@@ -28,7 +28,9 @@ vmotion-dsh/
 ├── assets/skills/vmotion # 改编自 Vmotion skills/vmotion（Apache-2.0，见 NOTICE）
 ├── examples/mcp.patch.example.yml   # 可选：用 dsh-mcp-client 挂 Vmotion MCP（非主路径）
 ├── scripts/boot-probe.mjs           # 无 LLM 的真实启动探针
-└── tests/                # node:test；unit（假 CLI）+ integration（真 CLI，需 VMOTION_CLI）
+├── tests/                # node:test；unit（假 CLI）+ integration（真 CLI，需 VMOTION_CLI）
+├── test-results/         # 本沙箱的实测证据（测试日志、启动探针、dump-config 摘录）
+└── VERIFICATION.md       # 验证记录、发现的问题、未验证项
 ```
 
 两个插件分成两行，是为了缺少某个服务（例如某个组合没有 `skills`）时另一个仍能加载。纯 JavaScript（带 JSDoc 类型）、无构建步骤，所以从 git 安装也不需要 `prepare`/`allowBuilds`。
@@ -135,8 +137,10 @@ VMOTION_PROBE_PROJECT=/path/to/project VMOTION_PROBE_OUT=/tmp/probe.json \
 
 ## 可选：通过 MCP 挂 Vmotion（不是主路径）
 
-只有文件编辑 + CLI 做不到时才用（例如需要连到正在运行的 Vmotion 应用的实时状态）。见 `examples/mcp.patch.example.yml`：用 DSH 官方的 `@deepseek-ai/dsh-mcp-client`，`transport: stdio`，`command`/`args` 指向 `vmotion mcp --project <dir> --tools compact`。这会给模型增加一批 MCP 工具与较大的上下文，技能里仍要求 MCP 最后使用。本仓库**未**实际启动该 MCP 连接验证。
+只有文件编辑 + CLI 做不到时才用（例如需要连到正在运行的 Vmotion 应用的实时状态）。见 `examples/mcp.patch.example.yml`：用 DSH 官方的 `@deepseek-ai/dsh-mcp-client`，`transport: stdio`，`command`/`args` 指向 `vmotion mcp --project <dir> --tools compact`。这会给模型增加一批 MCP 工具与较大的上下文，技能里仍要求 MCP 最后使用。
+
+**已知问题（Linux，Vmotion `41906d1`）：** `vmotion mcp` 退出后会留下 `/tmp/vmotion-<hash>.sock`，而 `dsh-mcp-client` 先起探测进程再起服务进程，服务进程因此 `EADDRINUSE` 失败。详见 `VERIFICATION.md`。示例配置能通过 `dsh-mcp-client` 的 Config 校验。
 
 ## 未验证 / 不确定的点
 
-见仓库根的 `VERIFICATION.md`。
+见 `VERIFICATION.md`（含：Windows 未验证、master 源码运行时未实跑、无真实模型回合、MCP 已知问题、几个格式上的不确定点）。
