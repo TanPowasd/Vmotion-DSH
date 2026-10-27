@@ -1,0 +1,17 @@
+# vmotion-dsh bundle layer. Applied after @deepseek-ai/dsh-base (and any
+# earlier bundles); rows reference this package by name so Node resolution
+# finds the installed code.
+#
+# Override the tools row from your profile's cordis.patch.yml, restating every
+# key you need (a patch replaces the whole `config`), e.g.:
+#
+# - id: vmotion-tools
+#   config:
+#     command: [node, /opt/vmotion/dist/cli/index.mjs]
+#     env:
+#       VMOTION_RUNTIME: /opt/vmotion/runtime
+- insert:
+    - id: vmotion-skill
+      name: vmotion-dsh/skill
+    - id: vmotion-tools
+      name: vmotion-dsh/tools

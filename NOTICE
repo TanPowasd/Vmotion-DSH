@@ -1,0 +1,8 @@
+vmotion-dsh
+Copyright 2026 the vmotion-dsh authors
+
+assets/skills/vmotion/ is adapted from skills/vmotion in the Vmotion
+repository (commit 41906d14fbcaef410d2eb6ae1ca2f3bbb85545c8), licensed under
+the Apache License, Version 2.0. Changes: SKILL.md gained the
+"In DeepSeek Harness (vmotion-dsh plugin)" section and a row note; the
+README.md for other agents was dropped.

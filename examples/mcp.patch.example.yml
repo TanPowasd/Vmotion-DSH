@@ -1,0 +1,19 @@
+# OPTIONAL, NOT the main path. Attach Vmotion's stdio MCP server through the
+# official DSH MCP client so its capabilities appear as model tools. Prefer
+# file edits + the vmotion_* tools; use this only when they cannot do the job
+# (e.g. live state of a running Vmotion app). Not exercised in this repo's tests.
+#
+# Copy into $DSH_HOME/profiles/<profile>/cordis.patch.yml (or pass with
+# --patch) and fix the paths. `env` is merged over a scrubbed environment
+# (names matching KEY|PASSWORD|SECRET|TOKEN and DSH_* are dropped).
+- insert:
+    - id: mcp-vmotion
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmotion
+        transport: stdio
+        command: vmotion            # or: node / C:\Vmotion\vmotion.cmd
+        args: [mcp, --project, /path/to/project, --tools, compact]
+        env:
+          VMOTION_RUNTIME: /path/to/runtime
+        cwd: /path/to/project

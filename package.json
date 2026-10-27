@@ -1,0 +1,46 @@
+{
+  "name": "vmotion-dsh",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness bundle: the Vmotion agent skill plus tools that wrap the local vmotion CLI (context, validate, frame, sample, image export, render, encoders, doctor).",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./skill": "./lib/skill.js",
+    "./tools": "./lib/tools.js",
+    "./run-cli": "./lib/run-cli.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/*.js",
+    "assets",
+    "cordis.patch.yml",
+    "examples/*.yml",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/schemastery": "^3.18.5",
+    "@deepseek-ai/dsh-tools": ">=0.2.1-rc.3 <0.3.0",
+    "@deepseek-ai/dsh-skill": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "check": "node scripts/check-bundle.mjs"
+  }
+}
