@@ -1,0 +1,119 @@
+{
+  "ok": true,
+  "pid": 1280,
+  "skill": {
+    "name": "vmotion",
+    "path": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh/assets/skills/vmotion/SKILL.md",
+    "description": "Make and edit videos, motion graphics, title cards, beat-synced cuts, captions/subtitles and still images (posters, covers, thumbnails) with Vmotion, the local programmable video workstation. Use whenever a task touches a Vmotion project (a folder with project.vmotion.json) or asks to create one. Author by editing project files directly (JSX/TSX components + scene/sequence JSON), validate and render with the `vmotion` CLI, and use the MCP server only as a last resort.",
+    "invocation": {
+      "modelInvocable": true,
+      "userInvocable": true
+    },
+    "source": "bundled",
+    "provider": "vmotion-dsh",
+    "resourceBase": {
+      "kind": "directory",
+      "path": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh/assets/skills/vmotion/"
+    }
+  },
+  "skillBodyChars": 18627,
+  "vmotionTools": [
+    "vmotion_context",
+    "vmotion_doctor",
+    "vmotion_encoders",
+    "vmotion_frame",
+    "vmotion_image_export",
+    "vmotion_render",
+    "vmotion_sample",
+    "vmotion_validate"
+  ],
+  "doctor": {
+    "isError": false,
+    "value": {
+      "ok": true,
+      "command": [
+        "node",
+        "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work/vm-dsh-wt/dist/cli/index.mjs"
+      ],
+      "version": "0.1.0",
+      "checks": [
+        {
+          "name": "cli",
+          "ok": true,
+          "detail": "vmotion 0.1.0"
+        },
+        {
+          "name": "VMOTION_NATIVE",
+          "ok": true,
+          "detail": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vm-native/dist/native/vmotion-core-e08675e71945c05e"
+        },
+        {
+          "name": "VMOTION_RUNTIME",
+          "ok": true,
+          "detail": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work/runtime (CJK fonts found)"
+        },
+        {
+          "name": "VMOTION_FFMPEG",
+          "ok": true,
+          "detail": "/usr/bin/ffmpeg"
+        },
+        {
+          "name": "VMOTION_FFPROBE",
+          "ok": true,
+          "detail": "/usr/bin/ffprobe"
+        }
+      ]
+    },
+    "error": null,
+    "text": "Vmotion CLI ok (command [\"node\",\"/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work/vm-dsh-wt/dist/cli/index.mjs\"], version 0.1.0)\n✓ cli: vmotion 0.1.0\n✓ VMOTION_NATIVE: /workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vm-native/dist/native/vmotion-core-e08675e71945c05e\n✓ VMOTION_RUNTIME: /workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work/runtime (CJK fonts found)\n✓ VMOTION_FFMPEG: /usr/bin/ffmpeg\n✓ VMOTION_FFPROBE: /usr/bin/ffprobe"
+  },
+  "validate": {
+    "isError": false,
+    "value": {
+      "ok": true,
+      "exitCode": 0,
+      "argv": [
+        "validate",
+        "--project",
+        "/tmp/vprobe",
+        "--json"
+      ],
+      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work",
+      "durationMs": 58176,
+      "result": {
+        "valid": true,
+        "revision": "90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7",
+        "diagnostics": []
+      }
+    },
+    "error": null,
+    "text": "vmotion validate: exit 0 (ok) in 58176 ms\n{\n  \"valid\": true,\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"diagnostics\": []\n}"
+  },
+  "frame": {
+    "isError": false,
+    "value": {
+      "ok": true,
+      "exitCode": 0,
+      "argv": [
+        "frame",
+        "--project",
+        "/tmp/vprobe",
+        "--frame",
+        "45",
+        "--output",
+        "/tmp/vprobe/exports/dsh/frame-45.png",
+        "--json"
+      ],
+      "cwd": "/workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/work",
+      "durationMs": 5827,
+      "result": {
+        "output": "/tmp/vprobe/exports/dsh/frame-45.png",
+        "revision": "90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7",
+        "frame": 45,
+        "mimeType": "image/png"
+      }
+    },
+    "error": null,
+    "text": "vmotion frame: exit 0 (ok) in 5827 ms\n{\n  \"output\": \"/tmp/vprobe/exports/dsh/frame-45.png\",\n  \"revision\": \"90a0eb414c3bfa4573158d5c7fd4b3beef72d2eb4aac45b8f3bf5121cbef62b7\",\n  \"frame\": 45,\n  \"mimeType\": \"image/png\"\n}"
+  }
+}

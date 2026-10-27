@@ -1,0 +1,57 @@
+✔ real CLI: doctor, context, validate, frame, sample on the starter project (26233.048637ms)
+✔ real CLI: an invalid edit is a domain result (exit 2) with JSX diagnostics (4249.450495ms)
+✔ real CLI: render a short MP4 range, probe encoders (11322.443157ms)
+✔ real CLI: still project image export (2450.804217ms)
+✔ real CLI: cancelling a render stops it (1544.757486ms)
+{
+  "error": {
+    "code": "ERROR",
+    "message": "listen EADDRINUSE: address already in use /tmp/vmotion-91cc422b298d89fbda148829.sock"
+  }
+}
+{
+  "error": {
+    "code": "ERROR",
+    "message": "listen EADDRINUSE: address already in use /tmp/vmotion-91cc422b298d89fbda148829.sock"
+  }
+}
+✖ optional MCP path: the example patch row is valid dsh-mcp-client config and attaches Vmotion MCP (198385.743911ms)
+✔ bundle manifest: dsh.bundle patch rows resolve to exported subpaths (4.487224ms)
+✔ plugin modules export the Cordis function-plugin shape (1.881022ms)
+✔ skill provider: catalog entry, body without frontmatter, resources (24.875218ms)
+✔ tools: all eight register; disabledTools is honoured (59.455859ms)
+✔ argv construction and path resolution (fake CLI) (237.078795ms)
+✔ argument validation fails loudly before spawning (15.830482ms)
+✔ exit codes: 2/3 are domain results, 1 is a tool error with the CLI error code (102.933767ms)
+✔ missing CLI: tools fail with a configuration hint; doctor reports ok:false (16.859108ms)
+✔ env scrubbing drops secrets and DSH_* unless configured explicitly (39.626909ms)
+✔ spawnPlan: no shell on POSIX; Windows .cmd goes through cmd.exe with strict quoting (1.386725ms)
+✔ parseJsonOutput tolerates log lines (0.292202ms)
+✔ timeout stops the CLI and its grandchildren (1510.089252ms)
+✔ cancellation through exec.signal aborts a running tool call and kills the process group (62.782202ms)
+✔ unloading the plugins removes the skill and tools (Cordis effects) (41.889841ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 246598.439076
+
+✖ failing tests:
+
+test at tests/integration.test.mjs:136:1
+✖ optional MCP path: the example patch row is valid dsh-mcp-client config and attaches Vmotion MCP (198385.743911ms)
+  AssertionError [ERR_ASSERTION]: MCP tools registered: 
+      at TestContext.<anonymous> (file:///workspace/projects/1b630383-67af-4e09-859c-a05230ade7d9/vmotion-dsh/tests/integration.test.mjs:155:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+EXIT 1
